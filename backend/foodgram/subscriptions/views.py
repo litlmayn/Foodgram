@@ -1,4 +1,3 @@
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status, mixins
@@ -24,7 +23,7 @@ class SubscriptionViewSet(mixins.CreateModelMixin,
             return Response(serializer.data,
                             status=status.HTTP_201_CREATED)
 
-    def destroy(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         following = get_object_or_404(models.CustomUser, pk=kwargs['user_id'])
         Subscription.objects.filter(following=following, user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

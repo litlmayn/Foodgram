@@ -92,7 +92,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         queryset=CustomUser.objects.all(),
     )
 
-    def validate_subscribe(self, following):
+    def validators(self, following):
         if self.context['request'].user != following:
             return following
         raise serializers.ValidationError("Нельзя подписаться на самого себя!")

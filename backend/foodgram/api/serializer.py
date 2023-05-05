@@ -41,16 +41,26 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name',)
 
 
+class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit')
+
+    class Meta:
+        model = IngredientInRecipe
+        fields = ('id', 'name',
+                  'measurement_unit', 'amount')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False)
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username',
     )
-    ingredients = serializers.SlugRelatedField(
-        queryset=Ingredient.objects.all(),
-        many=True,
-        slug_field='id',
+    ingredients = IngredientInRecipeSerializer(
+        many=True, read_only=True, source='recipes'
     )
     tags = TegSerializer(many=True, read_only=True)
 
@@ -62,6 +72,14 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text', 'cooking_time',
         )
         depth = 1
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        recipe = Recipe.objects.create(author=self.context['request'].user,
+                                       **validated_data)
+        self.tags_and_ingredients_set(recipe, tags, ingredients)
+        return recipe
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

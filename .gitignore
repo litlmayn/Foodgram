@@ -109,7 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-frontend/no_models/
+frontend/node_modules/
 
 # Spyder project settings
 .spyderproject

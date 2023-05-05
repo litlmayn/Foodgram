@@ -43,3 +43,5 @@ class Recipe(models.Model):
         ],
         verbose_name='Время приготовления',
     )
+    is_favorited = models.BooleanField(default=False)
+    is_in_shopping_cart = models.BooleanField(default=False)

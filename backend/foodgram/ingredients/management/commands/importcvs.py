@@ -3,7 +3,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from ingredients.models import IngredientList
+from ingredients.models import Ingredient
 
 
 def get_reader(file_name):
@@ -19,5 +19,5 @@ class Command(BaseCommand):
         csv_reader = get_reader('ingredients.csv')
         for row in csv_reader:
             name, measurement_unit = row[0], row[1]
-            obj, created = IngredientList.objects.get_or_create(
+            obj, created = Ingredient.objects.get_or_create(
                 name=name, measurement_unit=measurement_unit)

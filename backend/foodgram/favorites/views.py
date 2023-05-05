@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from .models import Favorite
@@ -8,10 +8,13 @@ from api.serializer import FavoriteSerializer
 
 
 class FavoriteViewSet(viewsets.ModelViewSet):
+    serializer_class = FavoriteSerializer
 
     def create(self, request, *args, **kwargs):
-        pk = kwargs['recipe_id']
-        recipe = get_object_or_404(Recipe, pk=pk)
-        favorite = Favorite.objects.create(user=request.user, recipe=recipe)
-        serializer = FavoriteSerializer(favorite)
-        return Response(serializer.data)
+        recipe = get_object_or_404(Recipe, pk=kwargs['recipe_id'])
+        request.data['recipe'] = recipe.id
+        request.data['user'] = request.user
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valide():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)

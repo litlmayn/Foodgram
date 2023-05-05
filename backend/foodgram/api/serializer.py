@@ -26,7 +26,7 @@ class Base64ImageField(serializers.ImageField):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientInRecipe
-        fields = '__all__'
+        fields = ('name', 'measurement_unit',)
 
 
 class TegSerializer(serializers.ModelSerializer):

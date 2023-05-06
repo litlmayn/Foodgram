@@ -10,3 +10,6 @@ class Favorite(models.Model):
         'recipes.Recipe',
         on_delete=models.CASCADE,
     )
+
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'

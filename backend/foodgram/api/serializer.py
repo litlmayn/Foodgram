@@ -111,12 +111,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class FavoriteSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
-        read_only=True,
         slug_field='id',
+        queryset=CustomUser.objects.all(),
     )
     recipe = serializers.SlugRelatedField(
-        read_only=True,
         slug_field='id',
+        queryset=Recipe.objects.all()
     )
 
     class Meta:

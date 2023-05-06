@@ -92,10 +92,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         queryset=CustomUser.objects.all(),
     )
 
-    def validators(self, following):
-        if self.context['request'].user != following:
-            return following
-        raise serializers.ValidationError("Нельзя подписаться на самого себя!")
+    def validate(self, data):
+        if data['user'] == data['following']:
+            raise serializers.ValidationError("Нельзя подписаться на самого себя!")
+        return data
 
     class Meta:
         model = Subscription

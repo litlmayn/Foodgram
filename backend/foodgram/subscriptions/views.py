@@ -9,9 +9,15 @@ from users import models, views
 
 
 class SubscriptionViewSet(mixins.CreateModelMixin,
+                          mixins.ListModelMixin,
                           mixins.DestroyModelMixin,
                           viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        subscribe = Subscription.objects.filter(user=request.user)
+        serializer = SubscriptionSerializer(subscribe, data=request.data)
+        return Response(serializer.data)
 
     def create(self, request, **kwargs):
         following = get_object_or_404(models.CustomUser, pk=kwargs['user_id'])

@@ -1,9 +1,10 @@
 from rest_framework import viewsets
 
-from api.serializer import TegSerializer
-from .models import Teg
+from api.serializer import TagSerializer
+from .models import Tag
 
 
-class TegViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Teg.objects.all()
-    serializer_class = TegSerializer
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    pagination_class = None
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer

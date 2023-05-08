@@ -5,7 +5,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from django.core.files.base import ContentFile
 
 
-from tegs.models import Teg
+from tegs.models import Tag
 from users.models import CustomUser
 from ingredients.models import IngredientInRecipe, Ingredient
 from recipes.models import Recipe
@@ -29,9 +29,9 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('name', 'measurement_unit',)
 
 
-class TegSerializer(serializers.ModelSerializer):
+class TagSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Teg
+        model = Tag
         fields = '__all__'
 
 
@@ -42,27 +42,22 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredient.id')
-    name = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.ReadOnlyField(
-        source='ingredient.measurement_unit')
-
     class Meta:
         model = IngredientInRecipe
-        fields = ('id', 'name',
-                  'measurement_unit', 'amount')
+        fields = ('id', 'amount')
 
 
 class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False)
     author = serializers.SlugRelatedField(
         read_only=True,
-        slug_field='username',
+        slug_field='id',
     )
     ingredients = IngredientInRecipeSerializer(
-        many=True, read_only=True, source='recipes'
+        many=True, required=True,
     )
-    tags = TegSerializer(many=True, read_only=True)
+    tags = serializers.PrimaryKeyRelatedField(many=True, required=True,
+                                              queryset=Tag.objects.all())
 
     class Meta:
         model = Recipe
@@ -71,14 +66,23 @@ class RecipeSerializer(serializers.ModelSerializer):
             'ingredients', 'name', 'image',
             'text', 'cooking_time',
         )
-        depth = 1
+
+    def create_ingredients(self, recipe, ingredients):
+        IngredientInRecipe.objects.bulk_create(
+            [IngredientInRecipe(
+                recipe=recipe,
+                ingredient=Ingredient.objects.get(pk=ingredient['id']),
+                amount=ingredient['amount']
+            ) for ingredient in ingredients])
 
     def create(self, validated_data):
+        request = self.context.get('request')
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(author=self.context['request'].user,
+        recipe = Recipe.objects.create(author=request.user,
                                        **validated_data)
-        self.tags_and_ingredients_set(recipe, tags, ingredients)
+        recipe.tags.set(tags)
+        self.create_ingredients(recipe=recipe, ingredients=ingredients)
         return recipe
 
 

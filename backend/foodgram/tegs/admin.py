@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from .models import Teg
+from .models import Tag
 
 
-class TegAdmin(admin.ModelAdmin):
+class TagAdmin(admin.ModelAdmin):
     fields = ('id', 'name', 'color', 'slug')
 
 
-admin.site.register(Teg)
+admin.site.register(Tag)

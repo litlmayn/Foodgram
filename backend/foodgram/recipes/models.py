@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from users.models import CustomUser
-from tegs.models import Teg
+from tegs.models import Tag
 from ingredients.models import Ingredient
 
 
@@ -33,7 +33,7 @@ class Recipe(models.Model):
         Ingredient,
         through='ingredients.IngredientInRecipe',
     )
-    tags = models.ForeignKey(Teg, on_delete=models.DO_NOTHING)
+    tags = models.ForeignKey(Tag, on_delete=models.DO_NOTHING)
     cooking_time = models.PositiveIntegerField(
         validators=[
             MinValueValidator(

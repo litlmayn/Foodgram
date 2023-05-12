@@ -1,12 +1,11 @@
 import base64
 
+from django.core.files.base import ContentFile
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Subscription, Tag)
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from django.core.files.base import ContentFile
-
-
 from users.models import CustomUser
-from recipes.models import Recipe, Tag, Ingredient, IngredientInRecipe, Subscription, Favorite, ShoppingCart
 
 
 class Base64ImageField(serializers.ImageField):
@@ -36,7 +35,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password', 'is_subscribed')
+        fields = ('id', 'username', 'email', 'first_name',
+                  'last_name', 'password', 'is_subscribed')
         extra_kwargs = {'password': {'write_only': True},
                         'is_subscribed': {'read_only': True}}
 
@@ -201,7 +201,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['user'] == data['following']:
-            raise serializers.ValidationError("Нельзя подписаться на самого себя!")
+            raise serializers.ValidationError(
+                "Нельзя подписаться на самого себя!"
+            )
         return data
 
     class Meta:

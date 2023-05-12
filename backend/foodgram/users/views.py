@@ -1,12 +1,13 @@
+from api.serializer import SubscribeSerializer, UserSerializer
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import viewsets, filters, status
+from recipes.models import Subscription
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import Subscription
 from .models import CustomUser
-from api.serializer import UserSerializer, SubscriptionSerializer, SubscribeSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):

@@ -1,19 +1,23 @@
 from datetime import date
 
-from rest_framework import viewsets, mixins, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from api.filters import RecipeFilter
+from api.serializer import (FavoriteSerializer, IngredientSerializer,
+                            RecipeAddSerializer, RecipeListSerializer,
+                            ShoppingCartSerializer, SubscriptionSerializer,
+                            TagSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-
-from api.serializer import (RecipeAddSerializer, IngredientSerializer,
-                            TagSerializer, SubscriptionSerializer,
-                            FavoriteSerializer, ShoppingCartSerializer,
-                            RecipeListSerializer)
-from .models import Recipe, Ingredient, Tag, Subscription, Favorite, ShoppingCart, IngredientInRecipe
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
 from users.models import CustomUser
+
+from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                     ShoppingCart, Subscription, Tag)
 
 
 def get_shopping_list_data(user):
@@ -43,6 +47,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeAddSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -68,6 +74,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (DjangoFilterBackend)
+    search_fields = ('^name',)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -93,7 +101,8 @@ class SubscriptionViewSet(mixins.CreateModelMixin,
         following = get_object_or_404(CustomUser, pk=kwargs['user_id'])
         Subscription.objects.filter(
             following=following, user=request.user).delete()
-        return Response({'message': f'Вы успешно отписались от пользователя {following}!'},
+        return Response({'message':
+                        f'Вы успешно отписались от пользователя {following}!'},
                         status=status.HTTP_204_NO_CONTENT)
 
 
@@ -101,6 +110,8 @@ class FavoriteViewSet(mixins.CreateModelMixin,
                       mixins.DestroyModelMixin,
                       viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = RecipeFilter
 
     def create(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipe, pk=kwargs['recipe_id'])
@@ -135,6 +146,7 @@ class ShoppingCartViewSet(mixins.CreateModelMixin,
 
     def delete(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipe, pk=kwargs['recipe_id'])
-        get_object_or_404(ShoppingCart, user=request.user, recipe=recipe).delete()
+        get_object_or_404(
+            ShoppingCart, user=request.user, recipe=recipe).delete()
         return Response({'message': 'Рецепт удалён из списка покупок!'},
                         status=status.HTTP_204_NO_CONTENT)

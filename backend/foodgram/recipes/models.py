@@ -1,9 +1,39 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
 from users.models import CustomUser
-from tegs.models import Tag
-from ingredients.models import Ingredient
+
+
+class Tag(models.Model):
+    name = models.CharField(
+        unique=True,
+        max_length=200,
+    )
+    color = models.CharField(
+        max_length=7,
+        unique=True,
+        help_text='Введите уникальный цвет в формате HEX',
+        verbose_name='Цвет в HEX',
+        validators=[RegexValidator(regex='^#[A-Fa-f0-9]{6}$',
+                                   message='Неверный HEX-код')]
+    )
+    slug = models.SlugField(
+        unique=True,
+        max_length=200,
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Ingredient(models.Model):
+    name = models.CharField(
+        max_length=200,
+        db_index=True,
+    )
+    measurement_unit = models.CharField(
+        max_length=200,
+    )
 
 
 class Recipe(models.Model):
@@ -23,7 +53,7 @@ class Recipe(models.Model):
         verbose_name='Название рецепта',
     )
     image = models.ImageField(
-        'Картинка',
+        verbose_name='Картинка',
         upload_to='recipes/media/',
     )
     text = models.TextField(
@@ -31,17 +61,97 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        through='ingredients.IngredientInRecipe',
+        through='IngredientInRecipe',
+        verbose_name='Ингредиенты',
     )
-    tags = models.ForeignKey(Tag, on_delete=models.DO_NOTHING)
+    tags = models.ManyToManyField(
+        Tag,
+        verbose_name='Теги',
+        related_name='tags',
+    )
     cooking_time = models.PositiveIntegerField(
+        verbose_name='Время приготовления',
         validators=[
             MinValueValidator(
                 1,
                 message='Время не может быть меньше 1 минуты!'
             )
         ],
-        verbose_name='Время приготовления',
     )
-    is_favorited = models.BooleanField(default=False)
-    is_in_shopping_cart = models.BooleanField(default=False)
+
+
+class IngredientInRecipe(models.Model):
+    ingredients = models.ForeignKey(
+        to=Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Ингредиент',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients',
+        verbose_name='Рецепт',
+    )
+    amount = models.PositiveIntegerField(
+        verbose_name='Количество',
+        validators=[
+            MinValueValidator(
+                1,
+                message='Количество ингредиентов не может быть меньше 1!'
+            )
+        ]
+    )
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+        'recipes.Recipe',
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'
+
+    class Meta:
+        verbose_name = 'Избранные рецепты.'
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='follower',
+    )
+    following = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='following',
+    )
+
+    def __str__(self):
+        return f'{self.user}, {self.following}'
+
+    class Meta:
+        verbose_name = 'Подписка на авторов.'
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+        'recipes.Recipe',
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'
+
+    class Meta:
+        default_related_name = 'shopping_cart'
+        verbose_name = 'Список покупок.'

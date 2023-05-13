@@ -106,7 +106,6 @@ class RecipeAddSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False)
     author = serializers.HiddenField(
         default=serializers.CurrentUserDefault())
-
     ingredients = IngredientInRecipeSerializer(
         many=True, write_only=True,
     )

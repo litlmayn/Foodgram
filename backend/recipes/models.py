@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
+
 from users.models import CustomUser
 
 
@@ -105,11 +106,13 @@ class IngredientInRecipe(models.Model):
 class Favorite(models.Model):
     user = models.ForeignKey(
         'users.CustomUser',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='favorite_user',
     )
     recipe = models.ForeignKey(
         'recipes.Recipe',
         on_delete=models.CASCADE,
+        related_name='favorite_recipe',
     )
 
     def __str__(self):
@@ -141,7 +144,7 @@ class Subscription(models.Model):
 class ShoppingCart(models.Model):
     user = models.ForeignKey(
         'users.CustomUser',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     recipe = models.ForeignKey(
         'recipes.Recipe',
@@ -152,5 +155,5 @@ class ShoppingCart(models.Model):
         return f'{self.user}, {self.recipe}'
 
     class Meta:
-        default_related_name = 'shopping_cart'
         verbose_name = 'Список покупок.'
+        default_related_name = 'shopping_cart'

@@ -1,19 +1,20 @@
 from datetime import date
 
-from api.filters import RecipeFilter
-from api.serializer import (FavoriteSerializer, IngredientSerializer,
-                            RecipeAddSerializer, RecipeListSerializer,
-                            ShoppingCartSerializer, SubscriptionSerializer,
-                            TagSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, status, viewsets
+from rest_framework import mixins, status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+
+from api.filters import RecipeFilter, IngredientSearchFilter
+from api.serializer import (FavoriteSerializer, IngredientSerializer,
+                            RecipeAddSerializer, RecipeListSerializer,
+                            ShoppingCartSerializer, SubscriptionSerializer,
+                            TagSerializer)
 from users.models import CustomUser
 
 from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
@@ -48,10 +49,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeAddSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilter
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
+        if self.action in permissions.SAFE_METHODS:
             return RecipeListSerializer
         return RecipeAddSerializer
 
@@ -59,9 +60,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        author = get_object_or_404(CustomUser, id=self.request.user.pk)
-        if author.shopping_cart.exists():
-            data = get_shopping_list_data(author)
+        user = get_object_or_404(CustomUser, id=self.request.user.pk)
+        if user.shopping_cart.exists():
+            data = get_shopping_list_data(user)
             response = generate_shopping_list_response(data)
             filename = 'shopping_list.txt'
             response['Content-Disposition'] = (f'attachment; '
@@ -75,7 +76,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend)
+    filter_backends = (IngredientSearchFilter,)
     search_fields = ('^name',)
 
 
@@ -88,7 +89,7 @@ class TagViewSet(viewsets.ModelViewSet):
 class SubscriptionViewSet(mixins.CreateModelMixin,
                           mixins.DestroyModelMixin,
                           viewsets.GenericViewSet):
-
+    permission_classes = [IsAuthenticated]
     def create(self, request, **kwargs):
         following = get_object_or_404(CustomUser, pk=kwargs['user_id'])
         request.data['user'] = request.user.id
@@ -137,7 +138,7 @@ class ShoppingCartViewSet(mixins.CreateModelMixin,
     permission_classes = [IsAuthenticated]
 
     def create(self, request, **kwargs):
-        recipe = get_object_or_404(CustomUser, pk=kwargs['recipe_id'])
+        recipe = get_object_or_404(Recipe, pk=kwargs['recipe_id'])
         request.data['recipe'] = recipe.id
         request.data['user'] = request.user.id
         serializer = ShoppingCartSerializer(data=request.data)

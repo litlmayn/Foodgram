@@ -30,6 +30,8 @@ class CustomUser(AbstractUser):
         choices=ROLE_CHOICES,
         default=USER,
     )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'username', 'password']
 
     class Meta:
         ordering = ('id',)

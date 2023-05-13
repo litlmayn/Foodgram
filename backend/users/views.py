@@ -1,4 +1,3 @@
-from api.serializer import SubscribeSerializer, UserSerializer
 from djoser.serializers import SetPasswordSerializer
 from recipes.models import Subscription
 from rest_framework import status, viewsets
@@ -6,17 +5,20 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,)
 from rest_framework.response import Response
 
+from api.serializer import SubscribeSerializer, UserSerializer
+from api.permissions import IsCurrentUserOrAdminOrReadOnly
 from .models import CustomUser
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsCurrentUserOrAdminOrReadOnly]
 
     @action(detail=False, methods=['get'],
             permission_classes=(IsAuthenticated,))
     def me(self, request):
-        serializer = UserSerializer(request.user)
+        serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data,
                         status=status.HTTP_200_OK)
 

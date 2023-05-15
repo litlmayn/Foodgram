@@ -7,6 +7,7 @@ from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
 class IngredientsRecipe(admin.TabularInline):
     model = IngredientInRecipe
     extra = 3
+    # я не нашел ничего в документации про обязательное поле
 
 
 class FavoriteAdmin(admin.ModelAdmin):
@@ -33,11 +34,13 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     filter_horizontal = ('ingredients',)
     inlines = [IngredientsRecipe]
+    exclude = ('ingredients',)
 
     def in_favorite(self, obj):
         return obj.favorite.all().count()
 
     in_favorite.short_description = 'В избранном'
+    # про manytomany мало инфы в доках, не могу понять как их вывести
 
 
 class RecipeIngredientAdmin(admin.ModelAdmin):

@@ -29,7 +29,8 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'author', 'name', 'pub_date', 'in_favorite')
+    list_display = ('id', 'author', 'name', 'pub_date',
+                    'in_favorite', 'ingredient_recipe')
     search_fields = ('name',)
     list_filter = ('author', 'name', 'tags')
     filter_horizontal = ('ingredients',)
@@ -40,7 +41,14 @@ class RecipeAdmin(admin.ModelAdmin):
         return obj.favorite.all().count()
 
     in_favorite.short_description = 'В избранном'
-    # не понимаю зачем это нужно? и не могу это реализовать
+
+    def ingredient_recipe(self, pk):
+        i = []
+        for ingredient in Ingredient.objects.filter(recipe=pk):
+            i.append(ingredient)
+        return i
+
+    ingredient_recipe.short_description = 'Ингредиенты'
 
 
 class RecipeIngredientAdmin(admin.ModelAdmin):

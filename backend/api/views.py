@@ -10,8 +10,7 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 
 from api.utils import (generate_shopping_list_response,
-                       method_create,
-                       method_delete)
+                       method_create)
 from api.filters import RecipeFilter, IngredientSearchFilter
 from api.serializer import (FavoriteSerializer, IngredientSerializer,
                             RecipeAddSerializer, RecipeListSerializer,
@@ -70,32 +69,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Список покупок пуст'},
                         status=status.HTTP_404_NOT_FOUND)
 
-    @action(methods=['post', 'delete'],
+    @action(methods=['post'],
             permission_classes=[IsAuthenticated],
             detail=True)
     def favorite(self, request, pk):
         if request.method == 'POST':
             return Response(method_create(FavoriteSerializer, request, pk),
                             status=status.HTTP_201_CREATED)
-        else:
-            method_delete(Favorite, request, pk)
-            return Response({'message': 'Рецепт удалён'},
-                            status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['post', 'delete'],
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk):
+        return (get_object_or_404(
+                    Favorite, user=request.user.id, recipe=pk).delete(),
+                Response({'message': 'Рецепт удалён'},
+                status=status.HTTP_204_NO_CONTENT)
+                )
+
+    @action(methods=['post'],
             permission_classes=[IsAuthenticated],
             detail=True)
-    def shopping_cart(self, request, *args, **kwargs):
-        pk = self.kwargs.get('pk')
-        if request.method == 'POST':
-            return Response(method_create(ShoppingCartSerializer, request, pk),
-                            status=status.HTTP_201_CREATED)
-        else:
-            method_delete(ShoppingCart, request, pk)
-            return Response({'message': 'Рецепт удалён'},
-                            status=status.HTTP_204_NO_CONTENT)
-    # про декоратор .mapping.delete
-    # в документации воббще 2 строчки кода о ней и все
+    def shopping_cart(self, request, pk):
+        return Response(method_create(ShoppingCartSerializer, request, pk),
+                        status=status.HTTP_201_CREATED)
+
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk):
+        return (get_object_or_404(
+                    ShoppingCart, user=request.user.id, recipe=pk).delete(),
+                Response({'message': 'Рецепт удалён'},
+                status=status.HTTP_204_NO_CONTENT)
+                )
 
 
 class IngredientViewSet(viewsets.ModelViewSet):

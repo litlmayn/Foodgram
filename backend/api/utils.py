@@ -1,6 +1,5 @@
 from datetime import date
 
-from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from rest_framework import response
 
@@ -28,7 +27,3 @@ def method_create(serializer, request, pk):
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return serializer.data
-
-
-def method_delete(model, request, pk):
-    get_object_or_404(model, user=request.user.id, recipe=pk).delete()

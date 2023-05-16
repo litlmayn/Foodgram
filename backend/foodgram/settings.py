@@ -8,11 +8,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-0qgcklgx()*k&wxtjuvjg$w=ru
 
 DEBUG = os.getenv('DEBUG_FLAG', False)
 
-ALLOWED_HOSTS = list(os.getenv('HOST', '*'))
-
-RECIPE_MAX_LENGHT = 200
-EMAIL_MAX_LENGHT = 254
-USER_MAX_LENGHT = 150
+ALLOWED_HOSTS = (os.getenv('HOST', '*')).split(',')
 
 
 INSTALLED_APPS = [

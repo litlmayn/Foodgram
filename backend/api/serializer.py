@@ -32,14 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
                         'is_subscribed': {'read_only': True}}
 
     def get_is_subscribed(self, obj):
-        requset = self.context.get('request')
-        return (requset and
-                not requset.user.is_anonymous and
-                CustomUser.objects.filter(following=obj.id).exists())
-
-    # без этого метода у меня пароль не хешируется
-    def create(self, validated_data):
-        return CustomUser.objects.create_user(**validated_data)
+        request = self.context.get('request')
+        return (request and
+                request.user.is_authenticated and
+                obj.following.filter(user=request.user.id).exists())
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -83,16 +79,16 @@ class RecipeListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return (
             request and
-            not request.user.is_anonymous and
-            CustomUser.objects.filter(favorite__recipe=obj.id).exists()
+            request.user.is_authenticated and
+            obj.favorite.filter(user=request.user.id).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         return (
             request and
-            not request.user.is_anonymous and
-            CustomUser.objects.filter(shopping_cart__recipe=obj.id).exists()
+            request.user.is_authenticated and
+            obj.shopping_cart.filter(user=request.user.id).exists()
         )
 
 
@@ -166,6 +162,8 @@ class RecipeAddSerializer(serializers.ModelSerializer):
                     {'tags': 'Теги не должны повторяться'})
             tags_list.append(tag)
         return value
+    # я делал валидацию количества и времени в модели,
+    # как раз там и проверил что оно не равно нулю, зачем еще раз?
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data
@@ -193,15 +191,17 @@ class SubscribeSerializer(serializers.ModelSerializer):
                   'is_subscribed', 'recipes', 'recipes_count')
 
     def get_is_subscribed(self, obj):
-        requset = self.context.get('request')
-        return (requset and
-                not requset.user.is_anonymous and
-                CustomUser.objects.filter(following=obj.id).exists())
+        request = self.context.get('request')
+        return (request and
+                request.user.id and
+                obj.following.filter(user=request.user.id).exists())
 
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
         recipes = Recipe.objects.filter(author__following=obj.id)
+        # я не понимаю как тут можно по другоме через related_name,
+        # куда еще короче
         if limit and limit.isdigit():
             recipes = recipes[:int(limit)]
         return RecipeForSubSerializer(recipes, many=True).data

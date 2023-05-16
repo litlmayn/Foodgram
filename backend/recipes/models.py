@@ -1,15 +1,15 @@
 from colorfield.fields import ColorField
-from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
+from api.constants import RECIPE_MAX_LENGHT
 from users.models import CustomUser
 
 
 class Tag(models.Model):
     name = models.CharField(
         unique=True,
-        max_length=settings.RECIPE_MAX_LENGHT,
+        max_length=RECIPE_MAX_LENGHT,
         verbose_name='Название тега',
     )
     color = ColorField(
@@ -18,7 +18,7 @@ class Tag(models.Model):
     )
     slug = models.SlugField(
         unique=True,
-        max_length=settings.RECIPE_MAX_LENGHT,
+        max_length=RECIPE_MAX_LENGHT,
         verbose_name='Slug тега'
     )
 
@@ -26,17 +26,17 @@ class Tag(models.Model):
         verbose_name = 'Тэги'
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'
 
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=settings.RECIPE_MAX_LENGHT,
+        max_length=RECIPE_MAX_LENGHT,
         db_index=True,
         verbose_name='Название ингредиента',
     )
     measurement_unit = models.CharField(
-        max_length=settings.RECIPE_MAX_LENGHT,
+        max_length=RECIPE_MAX_LENGHT,
         verbose_name='Единицы измерения',
     )
 
@@ -50,7 +50,7 @@ class Ingredient(models.Model):
         )
 
     def __str__(self) -> str:
-        return self.name
+        return f'{self.name}'
 
 
 class Recipe(models.Model):
@@ -66,7 +66,7 @@ class Recipe(models.Model):
         verbose_name='Дата публикации',
     )
     name = models.CharField(
-        max_length=settings.RECIPE_MAX_LENGHT,
+        max_length=RECIPE_MAX_LENGHT,
         verbose_name='Название рецепта',
     )
     image = models.ImageField(
@@ -100,6 +100,13 @@ class Recipe(models.Model):
         ],
     )
 
+    class Meta:
+        verbose_name = 'Рецепт'
+        ordering = ['name', 'author']
+
+    def __str__(self):
+        return f'{self.name}'
+
 
 class IngredientInRecipe(models.Model):
     ingredients = models.ForeignKey(
@@ -127,6 +134,12 @@ class IngredientInRecipe(models.Model):
         ]
     )
 
+    class Meta:
+        verbose_name = 'Ингредиенты в рецепте'
+
+    def __str__(self) -> str:
+        return f'{self.recipe}'
+
 
 class Subscription(models.Model):
     user = models.ForeignKey(
@@ -144,6 +157,7 @@ class Subscription(models.Model):
 
     class Meta:
         verbose_name = 'Подписка на авторов.'
+        ordering = ['following']
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'following'),
@@ -159,7 +173,7 @@ class Subscription(models.Model):
         return f'{self.user}, {self.following}'
 
 
-class Base(models.Model):
+class UserRecipe(models.Model):
     user = models.ForeignKey(
         'users.CustomUser',
         on_delete=models.CASCADE,
@@ -171,14 +185,15 @@ class Base(models.Model):
         verbose_name='Рецепт'
     )
 
-    def __str__(self):
-        return self.recipe
-
     class Meta:
         abstract = True
+        ordering = ['recipe']
+
+    def __str__(self):
+        return f'{self.recipe}, {self.user}'
 
 
-class Favorite(Base):
+class Favorite(UserRecipe):
 
     class Meta:
         verbose_name = 'Избранные рецепты'
@@ -190,11 +205,8 @@ class Favorite(Base):
             ),
         )
 
-    def __str__(self):
-        return f'{self.user}, {self.recipe}'
 
-
-class ShoppingCart(Base):
+class ShoppingCart(UserRecipe):
 
     class Meta:
         verbose_name = 'Список покупок'

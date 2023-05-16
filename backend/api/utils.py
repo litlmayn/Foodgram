@@ -4,8 +4,6 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from rest_framework import response
 
-from recipes.models import Recipe
-
 
 def generate_shopping_list_response(data):
     today = date.today().strftime("%d-%m-%Y")
@@ -24,8 +22,7 @@ def generate_shopping_list_response(data):
 
 
 def method_create(serializer, request, pk):
-    recipe = get_object_or_404(Recipe, id=pk)
-    request.data['recipe'] = recipe.id
+    request.data['recipe'] = pk
     request.data['user'] = request.user.id
     serializer = serializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -34,5 +31,4 @@ def method_create(serializer, request, pk):
 
 
 def method_delete(model, request, pk):
-    recipe = get_object_or_404(Recipe, id=pk)
-    get_object_or_404(model, user=request.user.id, recipe=recipe.id).delete()
+    get_object_or_404(model, user=request.user.id, recipe=pk).delete()

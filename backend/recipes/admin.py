@@ -7,7 +7,7 @@ from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
 class IngredientsRecipe(admin.TabularInline):
     model = IngredientInRecipe
     extra = 3
-    # я не нашел ничего в документации про обязательное поле
+    min_num = 1
 
 
 class FavoriteAdmin(admin.ModelAdmin):
@@ -40,7 +40,7 @@ class RecipeAdmin(admin.ModelAdmin):
         return obj.favorite.all().count()
 
     in_favorite.short_description = 'В избранном'
-    # про manytomany мало инфы в доках, не могу понять как их вывести
+    # не понимаю зачем это нужно? и не могу это реализовать
 
 
 class RecipeIngredientAdmin(admin.ModelAdmin):

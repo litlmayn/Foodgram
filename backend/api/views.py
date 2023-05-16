@@ -1,6 +1,7 @@
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from recipes.models import Subscription
 from rest_framework import mixins, status, viewsets, permissions
 from rest_framework.decorators import action
@@ -22,12 +23,10 @@ from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(DjoserUserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsCurrentUserOrAdminOrReadOnly]
-    # так и должно быть, что через postman ссылка на '.../api/users/me/'
-    # выдает 404, так и же и страница set_pass, но на фронте ок
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
@@ -74,8 +73,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(methods=['post', 'delete'],
             permission_classes=[IsAuthenticated],
             detail=True)
-    def favorite(self, request, *args, **kwargs):
-        pk = self.kwargs.get('pk')
+    def favorite(self, request, pk):
         if request.method == 'POST':
             return Response(method_create(FavoriteSerializer, request, pk),
                             status=status.HTTP_201_CREATED)
@@ -96,6 +94,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             method_delete(ShoppingCart, request, pk)
             return Response({'message': 'Рецепт удалён'},
                             status=status.HTTP_204_NO_CONTENT)
+    # про декоратор .mapping.delete
+    # в документации воббще 2 строчки кода о ней и все
 
 
 class IngredientViewSet(viewsets.ModelViewSet):

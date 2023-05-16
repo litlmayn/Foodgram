@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
 from recipes.models import Ingredient, Tag
 
 
@@ -18,22 +19,20 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         csv_reader = get_reader('ingredients.csv')
         try:
-            for row in csv_reader:
-                name, measurement_unit = row[0], row[1]
+            for name, measurement_unit in csv_reader:
                 Ingredient.objects.get_or_create(
                     name=name, measurement_unit=measurement_unit)
         except FileNotFoundError:
-            self.stdout.write(self.style.ERROR(f"Файл {csv_reader} не найден"))
+            self.stdout.write(self.style.ERROR(f'Файл {csv_reader} не найден'))
         else:
             self.stdout.write(self.style.SUCCESS('Ингредиенты добавлены.'))
 
         csv_reader = get_reader('tags.csv')
         try:
-            for row in csv_reader:
-                name, color, slug = row[0], row[1], row[2]
+            for name, color, slug in csv_reader:
                 Tag.objects.get_or_create(
                     name=name, color=color, slug=slug)
         except FileNotFoundError:
-            self.stdout.write(self.style.ERROR(f"Файл {csv_reader} не найден"))
+            self.stdout.write(self.style.ERROR(f'Файл {csv_reader} не найден'))
         else:
             self.stdout.write(self.style.SUCCESS('Теги добавлены.'))

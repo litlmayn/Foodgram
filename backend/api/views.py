@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from recipes.models import Subscription
-from rest_framework import mixins, status, viewsets, permissions
+from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
@@ -72,16 +72,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(methods=['post'],
             permission_classes=[IsAuthenticated],
             detail=True)
+    def subscribe(self, request, pk):
+        following = get_object_or_404(CustomUser, pk=pk)
+        request.data['user'] = request.user.id
+        request.data['following'] = following.id
+        serializer = SubscriptionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,
+                        status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def delete_subscribe(self, request, pk):
+        get_object_or_404(following=get_object_or_404(CustomUser, pk=pk,
+                          user=request.user).delete())
+        return Response({'message':
+                        'Вы успешно отписались от пользователя!'},
+                        status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['post'],
+            permission_classes=[IsAuthenticated],
+            detail=True)
     def favorite(self, request, pk):
-        if request.method == 'POST':
-            return Response(method_create(FavoriteSerializer, request, pk),
-                            status=status.HTTP_201_CREATED)
+        return Response(method_create(FavoriteSerializer, request, pk),
+                        status=status.HTTP_201_CREATED)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
-        return (get_object_or_404(
-                    Favorite, user=request.user.id, recipe=pk).delete(),
-                Response({'message': 'Рецепт удалён'},
+        get_object_or_404(Favorite, user=request.user.id, recipe=pk).delete()
+        return (Response({'message': 'Рецепт удалён'},
                 status=status.HTTP_204_NO_CONTENT)
                 )
 
@@ -94,9 +113,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk):
-        return (get_object_or_404(
-                    ShoppingCart, user=request.user.id, recipe=pk).delete(),
-                Response({'message': 'Рецепт удалён'},
+        get_object_or_404(
+            ShoppingCart, user=request.user.id, recipe=pk).delete()
+        return (Response({'message': 'Рецепт удалён'},
                 status=status.HTTP_204_NO_CONTENT)
                 )
 
@@ -113,27 +132,3 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
-
-
-class SubscriptionViewSet(mixins.CreateModelMixin,
-                          mixins.DestroyModelMixin,
-                          viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, **kwargs):
-        following = get_object_or_404(CustomUser, pk=kwargs['user_id'])
-        request.data['user'] = request.user.id
-        request.data['following'] = following.id
-        serializer = SubscriptionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data,
-                        status=status.HTTP_201_CREATED)
-
-    def delete(self, request, *args, **kwargs):
-        get_object_or_404(
-            following=get_object_or_404(CustomUser, pk=kwargs['user_id']),
-            user=request.user).delete()
-        return Response({'message':
-                        'Вы успешно отписались от пользователя!'},
-                        status=status.HTTP_204_NO_CONTENT)

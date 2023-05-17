@@ -42,10 +42,8 @@ class RecipeAdmin(admin.ModelAdmin):
 
     in_favorite.short_description = 'В избранном'
 
-    def ingredient_recipe(self, pk):
-        i = []
-        for ingredient in Ingredient.objects.filter(recipe=pk):
-            i.append(ingredient)
+    def ingredient_recipe(self, obj):
+        i = [ingredient for ingredient in obj.ingredients.all()]
         return i
 
     ingredient_recipe.short_description = 'Ингредиенты'

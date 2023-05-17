@@ -202,7 +202,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
         recipes = Recipe.objects.filter(author__following=obj.id)
         # я не понимаю как тут можно по другоме через related_name,
         # тут слишком сложно достать id рецепта что бы его автор,
-        # был наш подписчик
+        #  был наш подписчик
         if limit and limit.isdigit():
             recipes = recipes[:int(limit)]
         return RecipeForSubSerializer(recipes, many=True).data

@@ -30,7 +30,6 @@ class UserViewSet(DjoserUserViewSet):
             permission_classes=[IsAuthenticated],
             detail=True)
     def subscribe(self, request, **kwargs):
-        print(kwargs)
         following = get_object_or_404(CustomUser, pk=kwargs['id'])
         request.data['user'] = request.user.id
         request.data['following'] = following.id

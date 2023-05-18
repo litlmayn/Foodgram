@@ -1,15 +1,24 @@
 from datetime import date
 
 from django.http import HttpResponse
-from rest_framework import response
+from django.db.models import Sum
+
+from recipes.models import IngredientInRecipe
+
+
+def get_shopping_list_data(user):
+    return IngredientInRecipe.objects.filter(
+        recipe__shopping_cart__user=user
+    ).values(
+        'ingredients__name', 'ingredients__measurement_unit'
+    ).annotate(
+        amounts=Sum('amount', distinct=True)
+    ).order_by('amounts')
 
 
 def generate_shopping_list_response(data):
     today = date.today().strftime("%d-%m-%Y")
     shopping_list = f'Список покупок на: {today}\n\n'
-    filename = 'shopping_list.txt'
-    response['Content-Disposition'] = (f'attachment; '
-                                       f'filename={filename}')
     for ingredient in data:
         shopping_list += (
             f'{ingredient["ingredients__name"]} '

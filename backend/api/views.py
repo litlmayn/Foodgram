@@ -1,4 +1,3 @@
-from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
@@ -9,6 +8,7 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 
 from api.utils import (generate_shopping_list_response,
+                       get_shopping_list_data,
                        method_create)
 from api.filters import RecipeFilter, IngredientSearchFilter
 from api.serializer import (FavoriteSerializer, IngredientSerializer,
@@ -17,7 +17,7 @@ from api.serializer import (FavoriteSerializer, IngredientSerializer,
                             TagSerializer, UserSerializer, SubscribeSerializer)
 from api.permissions import IsCurrentUserOrAdminOrReadOnly
 from users.models import CustomUser
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+from recipes.models import (Favorite, Ingredient, Recipe,
                             ShoppingCart, Tag, Subscription)
 
 
@@ -77,15 +77,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        if request.user.shopping_cart.exists():
-            data = IngredientInRecipe.objects.filter(
-                recipe__shopping_cart__user=request.user
-            ).values(
-                'ingredients__name', 'ingredients__measurement_unit'
-            ).annotate(
-                amounts=Sum('amount')
-            ).order_by('ingredients__name')
-            return generate_shopping_list_response(data)
+        user = get_object_or_404(CustomUser, id=self.request.user.pk)
+        if user.shopping_cart.exists():
+            data = get_shopping_list_data(user)
+            response = generate_shopping_list_response(data)
+            filename = 'shopping_list.txt'
+            response['Content-Disposition'] = (f'attachment; '
+                                               f'filename={filename}')
+            return response
         return Response({'message': 'Список покупок пуст'},
                         status=status.HTTP_404_NOT_FOUND)
 

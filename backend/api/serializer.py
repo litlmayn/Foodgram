@@ -170,6 +170,7 @@ class RecipeAddSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise ValidationError(
                 {'amount': 'Время должно быть больше 0!'})
+        return value
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data

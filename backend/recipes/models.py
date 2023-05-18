@@ -49,7 +49,7 @@ class Ingredient(models.Model):
             ),
         )
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'{self.name}'
 
 
@@ -71,7 +71,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         verbose_name='Картинка',
-        upload_to='recipes/media/',
+        upload_to='media/',
     )
     text = models.TextField(
         verbose_name='Текст рецепта',

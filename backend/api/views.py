@@ -46,7 +46,7 @@ class UserViewSet(DjoserUserViewSet):
             following=get_object_or_404(CustomUser, pk=kwargs['id']),
             user=request.user).delete()
         return Response({'message':
-                        'Вы успешно отписались от пользователя'},
+                        'Вы успешно отписались от пользователя!'},
                         status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, permission_classes=[IsAuthenticated])

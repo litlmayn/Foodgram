@@ -148,6 +148,9 @@ class RecipeAddSerializer(serializers.ModelSerializer):
             if ingredient in ingredients_list:
                 raise ValidationError(
                     {'ingredients': 'Ингридиенты не должны повторяться'})
+            if int(item['amount']) <= 0:
+                raise ValidationError(
+                    {'amount': 'Количество должно быть больше 0!'})
             ingredients_list.append(ingredient)
         return value
 
@@ -162,11 +165,43 @@ class RecipeAddSerializer(serializers.ModelSerializer):
                     {'tags': 'Теги не должны повторяться'})
             tags_list.append(tag)
         return value
-    # я делал валидацию количества и времени в модели,
-    # как раз там и проверил что оно не равно нулю, зачем еще раз?
+
+    def validate_cooking_time(self, value):
+        if value <= 0:
+            raise ValidationError(
+                    {'amount': 'Время должно быть больше 0!'})
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count')
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        return (request and
+                request.user.is_authenticated and
+                obj.following.filter(user=request.user.id).exists()
+                )
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        limit = request.GET.get('recipes_limit')
+        recipes = obj.author.all()
+        if limit and limit.isdigit():
+            recipes = recipes[:int(limit)]
+        return RecipeForSubSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.author.all().count()
 
 
 class RecipeForSubSerializer(serializers.ModelSerializer):
@@ -175,51 +210,7 @@ class RecipeForSubSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
-    email = serializers.ReadOnlyField(source='following.email')
-    id = serializers.ReadOnlyField(source='following.id')
-    username = serializers.ReadOnlyField(source='following.username')
-    first_name = serializers.ReadOnlyField(source='following.first_name')
-    last_name = serializers.ReadOnlyField(source='following.last_name')
-    is_subscribed = serializers.SerializerMethodField()
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Subscription
-        fields = ('email', 'id', 'username', 'first_name', 'last_name',
-                  'is_subscribed', 'recipes', 'recipes_count')
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        return (request and
-                request.user.id and
-                obj.following.filter(user=request.user.id).exists())
-
-    def get_recipes(self, obj):
-        request = self.context.get('request')
-        limit = request.GET.get('recipes_limit')
-        recipes = Recipe.objects.filter(author__following=obj.id)
-        # я не понимаю как тут можно по другоме через related_name,
-        # тут слишком сложно достать id рецепта что бы его автор,
-        #  был наш подписчик
-        if limit and limit.isdigit():
-            recipes = recipes[:int(limit)]
-        return RecipeForSubSerializer(recipes, many=True).data
-
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author__following=obj.id).count()
-
-
 class SubscriptionSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=CustomUser.objects.all(),
-    )
-    following = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=CustomUser.objects.all(),
-    )
 
     def validate(self, data):
         if data['user'] == data['following']:
@@ -241,14 +232,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=CustomUser.objects.all(),
-    )
-    recipe = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=Recipe.objects.all()
-    )
 
     class Meta:
         model = Favorite
@@ -263,14 +246,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=CustomUser.objects.all(),
-    )
-    recipe = serializers.SlugRelatedField(
-        slug_field='id',
-        queryset=Recipe.objects.all()
-    )
 
     class Meta:
         model = ShoppingCart

@@ -2,7 +2,6 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from recipes.models import Subscription
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
@@ -19,7 +18,7 @@ from api.serializer import (FavoriteSerializer, IngredientSerializer,
 from api.permissions import IsCurrentUserOrAdminOrReadOnly
 from users.models import CustomUser
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShoppingCart, Tag)
+                            ShoppingCart, Tag, Subscription)
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -27,9 +26,33 @@ class UserViewSet(DjoserUserViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsCurrentUserOrAdminOrReadOnly]
 
+    @action(methods=['post'],
+            permission_classes=[IsAuthenticated],
+            detail=True)
+    def subscribe(self, request, **kwargs):
+        print(kwargs)
+        following = get_object_or_404(CustomUser, pk=kwargs['id'])
+        request.data['user'] = request.user.id
+        request.data['following'] = following.id
+        serializer = SubscriptionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,
+                        status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def delete_subscribe(self, request, **kwargs):
+        get_object_or_404(
+            Subscription,
+            following=get_object_or_404(CustomUser, pk=kwargs['id']),
+            user=request.user).delete()
+        return Response({'message':
+                        'Вы успешно отписались от пользователя!'},
+                        status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        follows = Subscription.objects.filter(user=self.request.user)
+        follows = CustomUser.objects.filter(following__user=self.request.user)
         pages = self.paginate_queryset(follows)
         serializer = SubscribeSerializer(
             pages,
@@ -68,27 +91,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return response
         return Response({'message': 'Список покупок пуст'},
                         status=status.HTTP_404_NOT_FOUND)
-
-    @action(methods=['post'],
-            permission_classes=[IsAuthenticated],
-            detail=True)
-    def subscribe(self, request, pk):
-        following = get_object_or_404(CustomUser, pk=pk)
-        request.data['user'] = request.user.id
-        request.data['following'] = following.id
-        serializer = SubscriptionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data,
-                        status=status.HTTP_201_CREATED)
-
-    @subscribe.mapping.delete
-    def delete_subscribe(self, request, pk):
-        get_object_or_404(following=get_object_or_404(CustomUser, pk=pk,
-                          user=request.user).delete())
-        return Response({'message':
-                        'Вы успешно отписались от пользователя!'},
-                        status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['post'],
             permission_classes=[IsAuthenticated],

@@ -85,8 +85,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             ).annotate(
                 amounts=Sum('amount')
             ).order_by('ingredients__name')
-            response = generate_shopping_list_response(data)
-            return response
+            return generate_shopping_list_response(data)
         return Response({'message': 'Список покупок пуст'},
                         status=status.HTTP_404_NOT_FOUND)
 

@@ -98,7 +98,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
         get_object_or_404(Favorite, user=request.user.id, recipe=pk).delete()
-        return (Response({'message': 'Рецепт удалён'},
+        return (Response({'message': 'Рецепт удалён!'},
                 status=status.HTTP_204_NO_CONTENT)
                 )
 

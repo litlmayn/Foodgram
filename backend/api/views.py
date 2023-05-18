@@ -77,10 +77,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = self.request.user.id
-        if user.shopping_cart.exists():
+        print(request.user)
+        if request.user.shopping_cart.exists():
             data = IngredientInRecipe.objects.filter(
-                        recipe__shopping_cart__user=user
+                        recipe__shopping_cart__user=request.user
                     ).values(
                         'ingredients__name', 'ingredients__measurement_unit'
                     ).annotate(

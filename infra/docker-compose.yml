@@ -2,9 +2,7 @@ version: '3.3'
 services:
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: litlmayn/foodgram-frontend:v1
     volumes:
       - ../frontend/:/app/result_build/
 
@@ -18,7 +16,7 @@ services:
       - ./.env
 
   web:
-    build: ../backend
+    image: litlmayn/foodgram-backend:v1
     restart: always
     volumes:
       - static_value:/app/backend_static/

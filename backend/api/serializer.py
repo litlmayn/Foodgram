@@ -141,7 +141,7 @@ class RecipeAddSerializer(serializers.ModelSerializer):
     def validate_ingredients(self, value):
         if not value:
             raise ValidationError(
-                {'ingredients': 'Необходимо выбрать ингредиент'})
+                {'ingredients': 'Необходимо выбрать ингредиент!'})
         ingredients_list = []
         for item in value:
             ingredient = get_object_or_404(Ingredient, name=item['id'])

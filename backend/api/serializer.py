@@ -33,9 +33,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        return (request and
-                request.user.is_authenticated and
-                obj.following.filter(user=request.user.id).exists())
+        return (request
+                and request.user.is_authenticated
+                and obj.following.filter(user=request.user.id).exists())
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -78,17 +78,17 @@ class RecipeListSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         return (
-            request and
-            request.user.is_authenticated and
-            obj.favorite.filter(user=request.user.id).exists()
+            request
+            and request.user.is_authenticated
+            and obj.favorite.filter(user=request.user.id).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         return (
-            request and
-            request.user.is_authenticated and
-            obj.shopping_cart.filter(user=request.user.id).exists()
+            request
+            and request.user.is_authenticated
+            and obj.shopping_cart.filter(user=request.user.id).exists()
         )
 
 
@@ -169,7 +169,7 @@ class RecipeAddSerializer(serializers.ModelSerializer):
     def validate_cooking_time(self, value):
         if value <= 0:
             raise ValidationError(
-                    {'amount': 'Время должно быть больше 0!'})
+                {'amount': 'Время должно быть больше 0!'})
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data
@@ -187,9 +187,9 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        return (request and
-                request.user.is_authenticated and
-                obj.following.filter(user=request.user.id).exists()
+        return (request
+                and request.user.is_authenticated
+                and obj.following.filter(user=request.user.id).exists()
                 )
 
     def get_recipes(self, obj):

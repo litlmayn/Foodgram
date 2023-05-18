@@ -77,15 +77,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        print(request.user)
         if request.user.shopping_cart.exists():
             data = IngredientInRecipe.objects.filter(
-                        recipe__shopping_cart__user=request.user
-                    ).values(
-                        'ingredients__name', 'ingredients__measurement_unit'
-                    ).annotate(
-                        amounts=Sum('amount')
-                    ).order_by('ingredients__name')
+                recipe__shopping_cart__user=request.user
+            ).values(
+                'ingredients__name', 'ingredients__measurement_unit'
+            ).annotate(
+                amounts=Sum('amount')
+            ).order_by('ingredients__name')
             response = generate_shopping_list_response(data)
             return response
         return Response({'message': 'Список покупок пуст'},

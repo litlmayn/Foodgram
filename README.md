@@ -1,11 +1,12 @@
-![Yamdb Workflow Status](https://github.com/litlmayn/yamdb_final/actions/workflows/main.yml/badge.svg?branch=master&event=push)
-### Проект Yamdb - это проект, направленный на оценку любых произведений!
+![Yamdb Workflow Status](https://github.com/litlmayn/foodgram-project-react/actions/workflows/main.yml/badge.svg?branch=master&event=push)
+### Проект Foodgram - это проект, направленный на поиск новых рецептов!
 
 ```
 Ссылка на развернутый проект: http://158.160.10.107
 ```
 ```
-С помощью данной плотформы люди могут обмениваться отзывами о произведениях, комментировать отзывы других участников.
+С помощью данной плотформы люди могут делиться рецептами, подписываться на авторов, сохранять любимые рецепты,
+а так же скачивать список для покупок.
 ```
 
 ### Мы использовали данный стек технологий для проектирования проекта:
@@ -13,11 +14,17 @@
 Django
 DRF
 Python
+PostgreSQL
+Docker
+Docker-compose
+Gunicorn
+Nginx
+React
 ```
 
 ```
 
-### Как запустить проект в dev режиме:
+### Как запустить проект режиме:
 
 Клонировать репозиторий и перейти в него в командной строке:
 
@@ -32,15 +39,17 @@ cd infra
 Запустить docker-compose:
 
 ```
-docker-compose up
+docker-compose up -d --build
 ```
 
 Выполните по очереди команды:
 
 ```
-docker-compose exec web python manage.py migrate
-docker-compose exec web python manage.py collectstatic --no-input
-docker-compose exec web python manage.py loaddata
+sudo docker-compose exec web python manage.py makemigrations
+sudo docker-compose exec web python manage.py migrate
+sudo docker-compose exec web python manage.py createsuperuser
+sudo docker-compose exec web python manage.py collectstatic --no-input
+sudo docker-compose exec web python manage.py importcsv
 ```
 
 ### Пример env-файла:

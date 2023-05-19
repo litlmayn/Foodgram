@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
@@ -7,9 +8,7 @@ from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from api.utils import (generate_shopping_list_response,
-                       get_shopping_list_data,
-                       method_create)
+from api.utils import (generate_shopping_list_response, method_create)
 from api.filters import RecipeFilter, IngredientSearchFilter
 from api.serializer import (FavoriteSerializer, IngredientSerializer,
                             RecipeAddSerializer, RecipeListSerializer,
@@ -18,7 +17,8 @@ from api.serializer import (FavoriteSerializer, IngredientSerializer,
 from api.permissions import IsCurrentUserOrAdminOrReadOnly
 from users.models import CustomUser
 from recipes.models import (Favorite, Ingredient, Recipe,
-                            ShoppingCart, Tag, Subscription)
+                            ShoppingCart, Tag, Subscription,
+                            IngredientInRecipe)
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -77,14 +77,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
             methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = get_object_or_404(CustomUser, id=self.request.user.pk)
+        user = request.user
         if user.shopping_cart.exists():
-            data = get_shopping_list_data(user)
-            response = generate_shopping_list_response(data)
-            filename = 'shopping_list.txt'
-            response['Content-Disposition'] = (f'attachment; '
-                                               f'filename={filename}')
-            return response
+            data = IngredientInRecipe.objects.filter(
+                recipe__shopping_cart__user=user
+            ).values(
+                'ingredients__name', 'ingredients__measurement_unit'
+            ).annotate(
+                amounts=Sum('amount')
+            ).order_by('amounts')
+            return generate_shopping_list_response(data)
         return Response({'message': 'Список покупок пуст'},
                         status=status.HTTP_404_NOT_FOUND)
 
@@ -98,9 +100,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
         get_object_or_404(Favorite, user=request.user.id, recipe=pk).delete()
-        return (Response({'message': 'Рецепт удалён!'},
-                status=status.HTTP_204_NO_CONTENT)
-                )
+        return Response({'message': 'Рецепт удалён!'},
+                        status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['post'],
             permission_classes=[IsAuthenticated],
@@ -113,9 +114,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def delete_shopping_cart(self, request, pk):
         get_object_or_404(
             ShoppingCart, user=request.user.id, recipe=pk).delete()
-        return (Response({'message': 'Рецепт удалён'},
-                status=status.HTTP_204_NO_CONTENT)
-                )
+        return Response({'message': 'Рецепт удалён'},
+                        status=status.HTTP_204_NO_CONTENT)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):

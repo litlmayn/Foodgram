@@ -10,24 +10,28 @@ class IngredientsRecipe(admin.TabularInline):
     min_num = 1
 
 
+@admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user',)
 
 
-class FollowAdmin(admin.ModelAdmin):
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'following')
     list_filter = ('following',)
     search_fields = ('user',)
 
 
+@admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'measurement_unit')
     list_filter = ('name',)
     search_fields = ('name',)
 
 
+@admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('id', 'author', 'name', 'pub_date',
                     'in_favorite', 'ingredient_recipe')
@@ -37,10 +41,9 @@ class RecipeAdmin(admin.ModelAdmin):
     inlines = [IngredientsRecipe]
     exclude = ('ingredients',)
 
+    @admin.display(description='В избранном')
     def in_favorite(self, obj):
         return obj.favorite.all().count()
-
-    in_favorite.short_description = 'В избранном'
 
     def ingredient_recipe(self, obj):
         return [ingredient for ingredient in obj.ingredients.all()]
@@ -48,28 +51,22 @@ class RecipeAdmin(admin.ModelAdmin):
     ingredient_recipe.short_description = 'Ингредиенты'
 
 
+@admin.register(IngredientInRecipe)
 class RecipeIngredientAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'ingredients', 'amount')
     list_filter = ('recipe', 'ingredients')
     search_fields = ('name',)
 
 
+@admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user',)
 
 
+@admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'color', 'slug')
     list_filter = ('name',)
     search_fields = ('name',)
-
-
-admin.site.register(Favorite, FavoriteAdmin)
-admin.site.register(Subscription, FollowAdmin)
-admin.site.register(Ingredient, IngredientAdmin)
-admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(IngredientInRecipe, RecipeIngredientAdmin)
-admin.site.register(ShoppingCart, ShoppingCartAdmin)
-admin.site.register(Tag, TagAdmin)

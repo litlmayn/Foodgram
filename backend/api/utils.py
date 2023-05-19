@@ -1,19 +1,6 @@
 from datetime import date
 
 from django.http import HttpResponse
-from django.db.models import Sum
-
-from recipes.models import IngredientInRecipe
-
-
-def get_shopping_list_data(user):
-    return IngredientInRecipe.objects.filter(
-        recipe__shopping_cart__user=user
-    ).values(
-        'ingredients__name', 'ingredients__measurement_unit'
-    ).annotate(
-        amounts=Sum('amount', distinct=True)
-    ).order_by('amounts')
 
 
 def generate_shopping_list_response(data):
@@ -25,8 +12,11 @@ def generate_shopping_list_response(data):
             f'({ingredient["ingredients__measurement_unit"]}) — '
             f'{ingredient["amounts"]}\n'
         )
-    return HttpResponse(shopping_list,
+    file = HttpResponse(shopping_list,
                         content_type='text/plain; charset=utf-8')
+    file['Content-Disposition'] = ('attachment; '
+                                   'filename=shopping_list.txt')
+    return file
 
 
 def method_create(serializer, request, pk):

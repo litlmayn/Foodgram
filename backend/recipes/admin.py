@@ -45,10 +45,9 @@ class RecipeAdmin(admin.ModelAdmin):
     def in_favorite(self, obj):
         return obj.favorite.all().count()
 
+    @admin.display(description='Ингредиенты')
     def ingredient_recipe(self, obj):
         return [ingredient for ingredient in obj.ingredients.all()]
-
-    ingredient_recipe.short_description = 'Ингредиенты'
 
 
 @admin.register(IngredientInRecipe)

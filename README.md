@@ -1,4 +1,4 @@
-![Yamdb Workflow Status](https://github.com/litlmayn/foodgram-project-react/actions/workflows/main.yml/badge.svg?branch=master&event=push)
+![Foodgram Workflow Status](https://github.com/litlmayn/foodgram-project-react/actions/workflows/main.yml/badge.svg?branch=master&event=push)
 ### Проект Foodgram - это проект, направленный на поиск новых рецептов!
 
 ```
